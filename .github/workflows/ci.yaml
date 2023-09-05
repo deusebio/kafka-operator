@@ -40,6 +40,12 @@ jobs:
       - name: Run tests
         run: tox run -e unit
 
+  sync-docs:
+    uses: ./.github/workflows/sync_docs.yaml
+    secrets: inherit
+    permissions:
+      actions: write  # Needed to login to Discourse
+
   build:
     name: Build charms
     uses: canonical/data-platform-workflows/.github/workflows/build_charms_with_cache.yaml@v2
