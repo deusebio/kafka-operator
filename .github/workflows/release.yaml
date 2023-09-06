@@ -29,8 +29,8 @@ jobs:
     uses: ./.github/workflows/ci.yaml
     secrets: inherit
     permissions:
-      actions: write  # Needed to login to Discourse
-
+      contents: write  # Needed to login to Discourse
+      actions: write
 
   # build:
   #   name: Build charm
