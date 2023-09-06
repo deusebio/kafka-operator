@@ -32,21 +32,21 @@ jobs:
       actions: write  # Needed to login to Discourse
 
 
-  build:
-    name: Build charm
-    uses: canonical/data-platform-workflows/.github/workflows/build_charm_without_cache.yaml@v2
-
-  release:
-    name: Release to Charmhub
-    needs:
-      - lib-check
-      - ci-tests
-      - build
-    uses: canonical/data-platform-workflows/.github/workflows/release_charm.yaml@v2
-    with:
-      channel: 3/edge
-      artifact-name: ${{ needs.build.outputs.artifact-name }}
-    secrets:
-      charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
-    permissions:
-      contents: write  # Needed to create GitHub release
+  # build:
+  #   name: Build charm
+  #   uses: canonical/data-platform-workflows/.github/workflows/build_charm_without_cache.yaml@v2
+  #
+  # release:
+  #   name: Release to Charmhub
+  #   needs:
+  #     - lib-check
+  #     - ci-tests
+  #     - build
+  #   uses: canonical/data-platform-workflows/.github/workflows/release_charm.yaml@v2
+  #   with:
+  #     channel: 3/edge
+  #     artifact-name: ${{ needs.build.outputs.artifact-name }}
+  #   secrets:
+  #     charmhub-token: ${{ secrets.CHARMHUB_TOKEN }}
+  #   permissions:
+  #     contents: write  # Needed to create GitHub release
