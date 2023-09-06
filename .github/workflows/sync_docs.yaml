@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Open PR with docs changes
-        uses: deusebio/discourse-gatekeeper@wip-test-fix
+        uses: deusebio/discourse-gatekeeper@wip-patch-skip-reconcile-for-same-content
         id: docs-pr
         with:
           discourse_host: discourse.charmhub.io
