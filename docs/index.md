@@ -1,4 +1,4 @@
-# Charmed Kafka Documentation
+## Charmed Kafka Documentation
 
 The Charmed Kafka Operator delivers automated operations management from day 0 to day 2 on the [Apache Kafka](https://kafka.apache.org) event streaming platform. It is an open source, end-to-end, production ready data platform on top of cloud native technologies.
 
