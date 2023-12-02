@@ -1071,7 +1071,6 @@ class DataUpgrade(Object, ABC):
 
         if not self.upgrade_stack:
             logger.error("Cluster upgrade failed, ensure pre-upgrade checks are ran first.")
-            self.set_unit_failed("Ensure pre-upgrade checks are ran before upgrading.")
             return
 
         if self.substrate == "vm":
