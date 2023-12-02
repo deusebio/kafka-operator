@@ -915,11 +915,16 @@ class DataUpgrade(Object, ABC):
             )
             getattr(self.on, "upgrade_finished").emit()
 
-    def _on_upgrade_created(self, event: RelationCreatedEvent) -> None:
+    def _on_upgrade_created(self, event: EventBase) -> None:
         """Handler for `upgrade-relation-created` events."""
+        logger.info(f"Running _on_upgrade_created: {self.peer_relation}")
+
         if not self.peer_relation:
             event.defer()
+            logger.info(f"Deferring _on_upgrade_created")
             return
+
+        logger.info(f"Running _on_upgrade_created: {self.peer_relation}")
 
         # setting initial idle state needed to avoid execution on upgrade-changed events
         self.peer_relation.data[self.charm.unit].update({"state": "idle"})
@@ -1047,12 +1052,26 @@ class DataUpgrade(Object, ABC):
     def _on_upgrade_charm(self, event: UpgradeCharmEvent) -> None:
         """Handler for `upgrade-charm` events."""
         # defer if not all units have pre-upgraded
+        logger.info(f"Triggering upgrade event: {self.peer_relation}")
+
         if not self.peer_relation:
             event.defer()
             return
 
+        if not self.peer_relation.data[self.charm.unit].get("state", None):
+
+            self.peer_relation.data[self.charm.unit].update({"state": "idle"})
+
+            if self.charm.unit.is_leader():
+                import json
+                logger.debug("Persisting dependencies to upgrade relation data...")
+                self.peer_relation.data[self.charm.app].update(
+                    {"dependencies": json.dumps(self.dependency_model.dict())}
+                )
+
         if not self.upgrade_stack:
             logger.error("Cluster upgrade failed, ensure pre-upgrade checks are ran first.")
+            self.set_unit_failed("Ensure pre-upgrade checks are ran before upgrading.")
             return
 
         if self.substrate == "vm":
@@ -1085,6 +1104,9 @@ class DataUpgrade(Object, ABC):
 
     def on_upgrade_changed(self, event: EventBase) -> None:
         """Handler for `upgrade-relation-changed` events."""
+
+        logger.info(f"Triggering on_upgrade_changed event: {event.handle.kind}")
+
         if not self.peer_relation:
             return
 
