@@ -91,49 +91,6 @@ Once all applications have rotated their credentials, it is then safe to remove 
 juju remove-application data-integrator
 ```
 
-## Password rotation
-
-### External clients
-
-#### With client application downtime
-
-The easiest way to rotate user credentials of client applications is by removing and then re-relating 
-the application (either a charm supporting the `kafka-client` interface or a `data-integrator`) with the `kafka` charm
-
-```shell
-juju remove-relation kafka <charm-or-data-integrator>
-# wait for the relation to be torn down 
-juju relate kafka <charm-or-data-integrator>
-```
-
-The successful credential rotation can be confirmed by retrieving the new password with the action `get-credentials`.
-
-#### Without client application downtime
-
-In some use-cases credentials should be rotated with no or limited application downtime.
-If credentials should be rotated with no or limited downtine, you can deploy a new charm with the same permissions and resource definition, e.g. 
-
-```shell
-juju deploy data-integrator rotated-user --channel stable \
-  --config topic-name=test-topic --config extra-user-roles=admin
-```
-
-The `data-integrator` charm can then be related to the `kafka` charm to create a new user
-```shell
-juju relate kafka rotated-user
-```
-
-At this point, we effectively have two overlapping users, therefore allowing applications to swap the password
-from one to another. 
-If the applications consist of fleets of independent producers and consumers, user credentials can be rotated
-progressively across fleets, such that no effective downtime is achieved. 
-
-Once all applications have rotated their credentials, it is then safe to remove data first `data-integrator` charm
-
-```shell
-juju remove-application data-integrator
-```
-
 ## Internal Password rotation
 
 The operator user is used internally by the Charmed Kafka Operator, the `set-password` action can be used to rotate its password.
