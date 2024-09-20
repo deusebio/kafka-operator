@@ -58,8 +58,8 @@ juju show-model | yq '.[].type'
 The Kafka and ZooKeeper charms can both be deployed as follows:
 
 ```shell
-$ juju deploy kafka --channel 3/edge -n <kafka-units> --trust
-$ juju deploy zookeeper --channel 3/edge -n <zookeeper-units>
+$ juju deploy kafka --channel 3/stable -n <kafka-units> --trust
+$ juju deploy zookeeper --channel 3/stable -n <zookeeper-units>
 ```
 
 where `<kafka-units>` and `<zookeeper-units>` – the number of units to deploy for Kafka and ZooKeeper. We recommend values of at least `3` and `5` respectively.
