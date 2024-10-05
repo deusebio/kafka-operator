@@ -34,6 +34,8 @@ Charmed Kafka is a distribution of Apache Kafka. It’s an open-source project t
 - Explore [Canonical Data Fabric solutions](https://canonical.com/data)
 - [Contact us]([/t/13107) for all further questions
 
+Apache®, Apache Kafka, Kafka®, and the Kafka logo are either registered trademarks or trademarks of the Apache Software Foundation in the United States and/or other countries.
+
 ## License
 
 The Charmed Kafka Operator is free software, distributed under the Apache Software License, version 2.0. See [LICENSE](https://github.com/canonical/kafka-operator/blob/main/LICENSE) for more information.
