@@ -57,21 +57,21 @@ Juju user credentials must be stored securely and rotated regularly to limit the
 
 In the following, we provide guidance on how to harden your deployment using:
 
-1. Operating System
-2. Apache Kafka and Apache ZooKeeper Security Upgrades
+1. Base images
+2. Charmed operator security upgrades
 3. Encryption 
 4. Authentication
-5. Monitoring and Auditing
+5. Monitoring and auditing
 
-### Operating System
+### Base images
 
 Charmed Apache Kafka and Charmed Apache ZooKeeper currently run on top of Ubuntu 22.04. Deploy a [Landscape Client Charm](https://charmhub.io/landscape-client?) in order to 
 connect the underlying VM to a Landscape User Account to manage security upgrades and integrate Ubuntu Pro subscriptions. 
 
-### Apache Kafka and Apache ZooKeeper Security Upgrades
+### Charmed operator security upgrades
 
 Charmed Apache Kafka and Charmed Apache ZooKeeper operators install a pinned revision of the [Charmed Apache Kafka snap](https://snapcraft.io/charmed-kafka)
-and [Charmed ZooKeeper snap](https://snapcraft.io/charmed-zookeeper), respectively, in order to provide reproducible and secure environments. 
+and [Charmed ZooKeeper snap](https://snapcraft.io/charmed-zookeeper), respectively, to provide reproducible and secure environments. 
 New versions of Charmed Apache Kafka and Charmed Apache ZooKeeper may be released to provide patching of vulnerabilities (CVEs). 
 It is important to refresh the charm regularly to make sure the workload is as secure as possible. 
 For more information on how to refresh the charm, see the [how-to upgrade](https://charmhub.io/kafka/docs/h-upgrade) guide.
@@ -108,8 +108,8 @@ Refer to How-To user guide for more information on:
 * [how to integrate the Charmed Apache Kafka deployment with COS](/t/charmed-kafka-how-to-enable-monitoring/10283)
 * [how to customise the alerting rules and dashboards](/t/charmed-kafka-documentation-how-to-integrate-custom-alerting-rules-and-dashboards/13431)
 
-External user access to Apache Kafka is logged to the `kafka-authorizer.log` that is pushes to [Loki endpoint](https://charmhub.io/loki-k8s) and exposed via [Grafana](https://charmhub.io/grafana), both components being part of the COS stack.
-Access denials are logged at INFO level, whereas allowed accesses are logged at DEBUG level. Depending on the auditing needs, 
+External user access to Apache Kafka is logged to the `kafka-authorizer.log` that is pushed to [Loki endpoint](https://charmhub.io/loki-k8s) and exposed via [Grafana](https://charmhub.io/grafana), both components being part of the COS stack.
+Access denials are logged at the `INFO` level, whereas allowed accesses are logged at the `DEBUG` level. Depending on the auditing needs, 
 customize the logging level either for all logs via the [`log_level`](https://charmhub.io/kafka/configurations?channel=3/stable#log_level) config option or 
 only tune the logging level of the `authorizerAppender` in the `log4j.properties` file. Refer to the Reference documentation, for more information about 
 the [file system paths](/t/charmed-kafka-documentation-reference-file-system-paths/13262).
