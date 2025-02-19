@@ -1,99 +1,105 @@
-# Cryptography
+# Security hardening guide
 
-This document describes the cryptography used by Charmed Apache Kafka.
+This document provides an overview of security features and guidance for hardening the security of [Charmed Apache Kafka](https://charmhub.io/kafka) deployments, including setting up and managing a secure environment.
 
-## Resource checksums
+## Environment
 
-Charmed Apache Kafka and Charmed Apache ZooKeeper operators use pinned revisions of their respective snaps to provide reproducible and secure environments.
+The environment where Charmed Apache Kafka operates can be divided into two components:
 
-The [Charmed Apache Kafka snap](https://snapstore.io/charmed-kafka) and [Charmed Apache ZooKeeper snap](https://snapstore.io/charmed-zookeeper) package the Apache Kafka and Apache ZooKeeper workloads, respectively, along with the necessary dependencies and utilities for operator lifecycle management.
-For details on the contents of these snaps, refer to the `snapcraft.yaml` file in the source code: [Charmed Apache Kafka snap contents](https://github.com/canonical/charmed-kafka-snap/blob/3/edge/snap/snapcraft.yaml) and [Charmed Apache ZooKeeper snap contents](https://github.com/canonical/charmed-zookeeper-snap/blob/3/edge/snap/snapcraft.yaml).
+1. Cloud
+2. Juju 
 
-Every artifact included in the snaps is verified against its SHA-256 or SHA-512 checksum after download.
+### Cloud
 
-## Sources verification
+Charmed Apache Kafka can be deployed on top of several clouds and virtualization layers: 
 
-Charmed Apache Kafka sources are stored in:
+| Cloud     | Security guides                                                                                                                                                                                                                                                         |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OpenStack | [OpenStack Security Guide](https://docs.openstack.org/security-guide/)                                                                                                                                                                                                 |
+| AWS       | [Best Practices for Security, Identity and Compliance](https://aws.amazon.com/architecture/security-identity-compliance), [AWS security credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/security-creds.html#access-keys-and-secret-access-keys)          | 
+| Azure     | [Azure security best practices and patterns](https://learn.microsoft.com/en-us/azure/security/fundamentals/best-practices-and-patterns), [Managed identities for Azure resource](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/) |
 
-* GitHub repositories for snaps, rocks and charms
-* LaunchPad repositories for the Apache Kafka and Apache ZooKeeper upstream fork used for building their respective distributions
+### Juju 
 
-### LaunchPad
+Juju is the component responsible for orchestrating the entire lifecycle, from deployment to Day 2 operations. For more information on Juju security hardening, see the [Juju security](/t/juju-security/15684) page and the [How to harden your deployment](https://juju.is/docs/juju/harden-your-deployment) guide.
 
-Distributions are built using private repositories only, hosted as part of the [SOSS namespace](https://launchpad.net/soss) to eventually
-integrate with Canonical's standard process for fixing CVEs. 
-Branches associated with releases are mirrored to a public repository, hosted in the [Data Platform namespace](https://launchpad.net/~data-platform) 
-to also provide the community with the patched source code. 
+#### Cloud credentials
 
-### GitHub
+When configuring cloud credentials to be used with Juju, ensure that users have correct permissions to operate at the required level. 
+Juju superusers responsible for bootstrapping and managing controllers require elevated permissions to manage several kinds of resources, such as
+virtual machines, networks, storages, etc. Please refer to the links below for more information on the policies required to be used depending on the cloud. 
 
-All Apache Kafka and Apache ZooKeeper artifacts built by Canonical are published and released 
-programmatically using release pipelines implemented via GitHub Actions. 
-Distributions are published as both GitHub and LaunchPad releases via the [central-uploader repository](https://github.com/canonical/central-uploader), while 
-charms, snaps and rocks are published using the workflows of their respective repositories. 
+| Cloud     | Cloud user policies                                                                                                                                                                                                                            |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OpenStack | N/A                                                                                                                                                                                                                                            |
+| AWS       | [Juju AWS Permission](/t/juju-aws-permissions/5307), [AWS Instance Profiles](/t/using-aws-instance-profiles-with-juju-2-9/5185), [Juju on AWS](https://juju.is/docs/juju/amazon-ec2) | 
+| Azure     | [Juju Azure Permission](https://juju.is/docs/juju/microsoft-azure), [How to use Juju with Microsoft Azure](/t/how-to-use-juju-with-microsoft-azure/15219)                                                         |
 
-All repositories in GitHub are set up with branch protection rules, requiring:
+#### Juju users
 
-* new commits to be merged to main branches via pull request with at least 2 approvals from repository maintainers
-* new commits to be signed (e.g. using GPG keys)
-* developers to sign the [Canonical Contributor License Agreement (CLA)](https://ubuntu.com/legal/contributors)
+It is very important that Juju users are set up with minimal permissions depending on the scope of their operations. 
+Please refer to the [User access levels](https://juju.is/docs/juju/user-permissions) documentation for more information on the access levels and corresponding abilities. 
 
-## Encryption
+Juju user credentials must be stored securely and rotated regularly to limit the chances of unauthorized access due to credentials leakage.
 
-Charmed Apache Kafka can be used to deploy a secure Apache Kafka cluster that provides encryption-in-transit capabilities out of the box 
-for:
+## Applications
 
-* Interbroker communications
-* Apache ZooKeeper connection
-* External client connection 
+In the following, we provide guidance on how to harden your deployment using:
 
-To set up a secure connection Charmed Apache Kafka and Charmed Apache ZooKeeper applications need to be integrated with TLS Certificate Provider charms, e.g. 
-`self-signed-certificates` operator. Certificate Singing Requests (CSRs) are generated for every unit using the `tls_certificates_interface` library that uses the `cryptography` 
-Python library to create X.509 compatible certificates. The CSR is signed by the TLS Certificate Provider, returned to the units, and 
-stored in a password-protected Keystore file. The password of the Keystore is stored in Juju secrets starting from revision 168 of Charmed Apache Kafka 
-and revision 130 of Charmed Apache ZooKeeper. The relation also provides the CA certificate, which is loaded into a password-protected Truststore file.
+1. Operating system
+2. Security upgrades
+3. Encryption 
+4. Authentication
+5. Monitoring and auditing
 
-When encryption is enabled, hostname verification is turned on for client connections, including inter-broker communication. The cipher suite can 
-be customized by specifying a list of allowed cipher suites for external clients and Apache ZooKeeper connections. This is done using the charm configuration options
-`ssl_cipher_suites`  and `zookeeper_ssl_cipher_suites` respectively (see [reference documentation](https://charmhub.io/kafka/configurations)). 
+### Operating system
 
-Encryption at rest is currently not supported, although it can be provided by the substrate (cloud or on-premises).
+Charmed Apache Kafka and Charmed Apache ZooKeeper currently run on top of Ubuntu 22.04. Deploy a [Landscape Client Charm](https://charmhub.io/landscape-client?) to 
+connect the underlying VM to a Landscape User Account to manage security upgrades and integrate [Ubuntu Pro](https://ubuntu.com/pro) subscriptions. 
 
-## Authentication
+### Security upgrades
 
-In Charmed Apache Kafka, authentication layers can be enabled for:
+Charmed Apache Kafka and Charmed Apache ZooKeeper operators install a pinned revision of the [Charmed Apache Kafka snap](https://snapcraft.io/charmed-kafka)
+and [Charmed ZooKeeper snap](https://snapcraft.io/charmed-zookeeper), respectively, to provide reproducible and secure environments. 
 
-1. Apache ZooKeeper connections
-2. Apache Kafka inter-broker communication 
-3. Apache Kafka clients
+New versions of Charmed Apache Kafka and Charmed Apache ZooKeeper may be released to provide patching of vulnerabilities (CVEs). 
+It is important to refresh the charm regularly to make sure the workload is as secure as possible. 
+For more information on how to refresh the charm, see the [how-to upgrade](https://charmhub.io/kafka/docs/h-upgrade) guide.
 
-### Apache Kafka authentication to Apache ZooKeeper
+### Encryption
 
-Authentication to Apache ZooKeeper is based on Simple Authentication and Security Layer (SASL) using digested MD5 hashes of
-username and password and implemented both for client-server (with Apache Kafka) and server-server communication.
-Username and passwords are exchanged using peer relations among Apache ZooKeeper units and using normal relations between Apache Kafka and Apache ZooKeeper.
-Juju secrets are used for exchanging credentials starting from revision 168 of Charmed Apache Kafka and revision 130 of Charmed Apache ZooKeeper.
+Charmed Apache Kafka must be deployed with encryption enabled. 
+To do that, you need to relate Charmed Apache Kafka and Charmed Apache ZooKeeper to one of the TLS certificate operator charms. 
+Please refer to the [Charming Security page](https://charmhub.io/topics/security-with-x-509-certificates) for more information on how to select the right certificate
+provider for your use case. 
 
-Usernames and passwords for different users are stored in Apache ZooKeeper servers in a [JAAS](https://docs.oracle.com/en/java/javase/11/security/java-authentication-and-authorization-service-jaas-reference-guide.html) configuration file in plain text format. 
-Permissions on the file are restricted to the root user only. 
+For more information on encryption, see the [Cryptography](/t/charmed-apache-kafka-documentation-explanation-security/15714) explanation page and the [How to enable encryption](/t/charmed-apache-kafka-documentation-how-to-enable-encryption/10281) guide.
 
-### Apache Kafka Inter-broker authentication
+### Authentication
 
-Authentication among brokers is based on the SCRAM-SHA-512 protocol. Usernames and passwords are exchanged via peer relations, using Juju secrets from revision 168 of Charmed Apache Kafka.
+Charmed Apache Kafka supports the following authentication layers:
 
-The Apache Kafka username and password, used by brokers to authenticate one another, are stored both in an Apache ZooKeeper zNode and in a JAAS configuration file on the Apache Kafka server in plain text format. 
+1. [SCRAM-based SASL Authentication](/t/charmed-kafka-how-to-manage-app/10285)
+2. [certificate-base Authentication (mTLS)](/t/create-mtls-client-credentials/11079)
+3. OAuth Authentication using [Hydra](/t/how-to-connect-to-kafka-using-hydra-as-oidc-provider/14610) or [Google](/t/how-to-connect-to-kafka-using-google-as-oidc-provider/14611)
 
-The file needs to be readable and writable by root (as it is created by the charm) and readable by the `snap_daemon` user running the Apache Kafka server snap commands.
+Each combination of authentication scheme and encryption is associated with the dedicated listener and it maps to a well-defined port. See the [listener reference documentation](/t/charmed-kafka-documentation-reference-listeners/13264) for more information. 
 
-### Client authentication to Apache Kafka
+### Monitoring and Auditing
 
-Clients can authenticate to Apache Kafka using:
+Charmed Apache Kafka provides native integration with the [Canonical Observability Stack (COS)](https://charmhub.io/topics/canonical-observability-stack).
+To reduce the blast radius of infrastructure disruptions, the general recommendation is to deploy COS and the observed application into separate environments, isolated from one another. Refer to the [COS production deployments best practices](https://charmhub.io/topics/canonical-observability-stack/reference/best-practices)
+for more information. 
 
-1. username and password exchanged using SCRAM-SHA-512 protocols 
-2. client certificates or CAs (mTLS)
+For instructions, see the [How to integrate the Charmed Apache Kafka deployment with COS](/t/charmed-kafka-how-to-enable-monitoring/10283) and [How to customise the alerting rules and dashboards](/t/charmed-kafka-documentation-how-to-integrate-custom-alerting-rules-and-dashboards/13431) guides.
 
-When using SCRAM, usernames and passwords are stored in Apache ZooKeeper to be used by the Apache Kafka processes, in peer-relation data to be used by the Apache Kafka charm and in external relation to be shared with client applications. 
-Starting from revision 168 of Charmed Apache Kafka, Juju secrets are used for storing the credentials instead of plain text.
+External user access to Apache Kafka is logged to the `kafka-authorizer.log` that is pushed to [Loki endpoint](https://charmhub.io/loki-k8s) and exposed via [Grafana](https://charmhub.io/grafana), both components being part of the COS stack.
 
-When using mTLS, client certificates are loaded into a `tls-certificates` operator and provided to the Charmed Apache Kafka via the plain-text unencrypted 
-relation. Certificates are stored in the password-protected Truststore file.
+Access denials are logged at the `INFO` level, whereas allowed accesses are logged at the `DEBUG` level. Depending on the auditing needs, 
+customize the logging level either for all logs via the [`log_level`](https://charmhub.io/kafka/configurations?channel=3/stable#log_level) config option or 
+only tune the logging level of the `authorizerAppender` in the `log4j.properties` file. See
+the [file system paths](/t/charmed-kafka-documentation-reference-file-system-paths/13262) for further information.
+
+## Additional Resources
+
+For details on the cryptography used by Charmed Apache Kafka, see the [Cryptography](/t/charmed-apache-kafka-documentation-explanation-security/15714) explanation page.
